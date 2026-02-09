@@ -1,0 +1,33 @@
+name: DAST Baseline Scan
+
+on:
+  push:
+    branches: [ "main" ] # Tự động chạy mỗi khi push code lên GitHub
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+    name: Quét bảo mật DAST - Giai đoạn 1
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        # Đóng gói ứng dụng từ Dockerfile của bạn
+        run: docker build -t micro-shop-app .
+
+      - name: Run Docker Container
+        # Chạy container và đợi 40 giây để Tomcat 11 khởi động hoàn toàn
+        run: |
+          docker run -d -p 8080:8080 --name micro-shop-test micro-shop-app
+          sleep 40 
+
+      - name: ZAP Scan
+        # Sử dụng thám tử OWASP ZAP để tìm các lỗ hổng bảo mật cơ bản
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:8080/' # Tấn công thử nghiệm vào cổng 8080
+          issue_title: 'Kết quả quét bảo mật DAST - Giai đoạn 1'
+          fail_action: false # Vẫn hiện tích xanh để bạn lấy kết quả làm báo cáo dù có lỗi bảo mật
