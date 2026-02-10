@@ -63,10 +63,10 @@ public class OrderCleanupTask extends TimerTask {
             conn.setAutoCommit(false); 
             
             // 2. TÌM VÀ LẤY ID TAIKHOAN LIÊN QUAN
-            String sqlSelect = "SELECT MaDonHang, MaTaiKhoan " +
-                           "FROM DONHANG " +
-                           "WHERE TrangThai = 'CHO_THANH_TOAN' AND ThoiGianTao < DATE_SUB(NOW(), INTERVAL ? MINUTE)";
-            
+           // Dùng DATEADD với tham số âm để trừ thời gian trong SQL Server
+String sqlSelect = "SELECT MaDonHang, MaTaiKhoan " +
+                   "FROM DONHANG " +
+                   "WHERE TrangThai = 'CHO_THANH_TOAN' AND ThoiGianTao < DATEADD(minute, -?, GETDATE())";
             List<Integer> maTaiKhoanToRelease = new ArrayList<>();
             List<Integer> maDonHangToUpdate = new ArrayList<>();
 //            System.out.println(maDonHangToUpdate.size());
@@ -150,8 +150,8 @@ public class OrderCleanupTask extends TimerTask {
             
             // 2. TÌM VÀ LẤY ID TAIKHOAN LIÊN QUAN
             String sqlSelect = "SELECT MaDonHangSlot, MaTaiKhoanSteam " +
-                           "FROM DONHANG_SLOT_STEAM " +
-                           "WHERE TrangThai = 'CHO_THANH_TOAN' AND ThoiGianTao < DATE_SUB(NOW(), INTERVAL ? MINUTE)";
+                   "FROM DONHANG_SLOT_STEAM " +
+                   "WHERE TrangThai = 'CHO_THANH_TOAN' AND ThoiGianTao < DATEADD(minute, -?, GETDATE())";
             
             List<Integer> maTaiKhoanToRelease = new ArrayList<>();
             List<Integer> maDonHangToUpdate = new ArrayList<>();

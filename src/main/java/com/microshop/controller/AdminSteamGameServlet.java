@@ -41,7 +41,7 @@ public class AdminSteamGameServlet extends HttpServlet {
     private GameSteamDAO gameSteamDAO;
     private BaiVietGioiThieuDAO baiVietDAO;
 
-    private final String EXTERNAL_UPLOAD_PATH = "C:/Users/os/Desktop/microshop_uploads";
+    private final String EXTERNAL_UPLOAD_PATH = "/uploads";
 
     @Override
     public void init() {

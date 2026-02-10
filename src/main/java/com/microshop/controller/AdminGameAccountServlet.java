@@ -59,7 +59,7 @@ public class AdminGameAccountServlet extends HttpServlet {
 
     private Map<Integer, String> categoryMap;
 
-    private final String EXTERNAL_UPLOAD_PATH = "C:/Users/os/Desktop/microshop_uploads";
+    private final String EXTERNAL_UPLOAD_PATH = "/uploads";
 
     @Override
     public void init() {

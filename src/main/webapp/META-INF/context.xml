@@ -4,7 +4,7 @@
     <Resources>
         <PreResources 
             className="org.apache.catalina.webresources.DirResourceSet"
-            base="C:/Users/os/Desktop/microshop_uploads"
+            base="/uploads"
             webAppMount="/uploads" />
     </Resources>
     

@@ -1,0 +1,21 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: microshop-db # Đặt tên cố định cho dễ quản lý
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrongPassword123!
+    ports:
+      - "1434:1433"
+   
+
+  app:
+    build: .
+    container_name: micro-shop-test
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+        
+    environment:
+      - DB_URL=jdbc:sqlserver://db:1433;databaseName=microShop;encrypt=true;trustServerCertificate=true;

@@ -9,22 +9,21 @@ import com.zaxxer.hikari.HikariDataSource;
 public class DBContext {
     
     // jdbc:mysql - định dạng kết nối JDBC cho MySQL
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/microshop_db";
+    private static final String DB_URL = "jdbc:sqlserver://db:1434;databaseName=microShop;encrypt=true;trustServerCertificate=true;";
     // Cái này là tài khoản root của MySQL server trên máy của <Hưng>
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "hung";
+    private static final String DB_USER = "sa";
+    private static final String DB_PASSWORD = "YourStrongPassword123!";
 
     private static HikariDataSource dataSource;
 
     static {
         try {
             HikariConfig config = new HikariConfig();
-
-            config.setJdbcUrl(DB_URL + "?characterEncoding=UTF-8");
+            config.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+            config.setJdbcUrl(DB_URL);
             config.setUsername(DB_USER);
             config.setPassword(DB_PASSWORD);
 
-            config.setDriverClassName("com.mysql.cj.jdbc.Driver");
 
             config.addDataSourceProperty("cachePrepStmts", "true");
             config.addDataSourceProperty("prepStmtCacheSize", "250");
