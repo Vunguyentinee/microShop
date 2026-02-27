@@ -2,7 +2,10 @@ name: DAST Baseline Scan
 on:  
   push:    
     branches: [ "main" , "fix-hung"]
-
+    // Tạm để cơ chế kích hoạt ở nhánh 'fix-hung' để fix nhanh lỗi DAST
+    // Triển khai thực tế cần quy định ít nhất 'on pull' với 'main', 'develop' và on push với tất cả các nhánh khác 
+    
+    
 jobs:  
   zap_scan:    
     runs-on: ubuntu-latest    
@@ -22,25 +25,32 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
+          // Đoạn này là khởi tạo MySQL và check sức khỏe Server
 
     steps:      
       - name: 1. Tải code từ GitHub về máy ảo        
         uses: actions/checkout@v4      
       
-      # 2. Đổ dữ liệu vào MySQL (Giả sử các file .sql nằm ở thư mục root)
+      # 2. Đổ dữ liệu vào MySQL
       - name: 2. Import Database Schema và Mock Data
         run: |
-          mysql -h 127.0.0.1 -u root -proot microshop_db < database/database_schema.sql
-          mysql -h 127.0.0.1 -u root -proot microshop_db < database/root_data.sql
-          mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_ff.sql
-          mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_lq.sql
-          mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_riot.sql
-          mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_steam_game.sql
+        // Đối với web này, CSDL cần được nạp 6 file .sql sau
+          mysql -h 127.0.0.1 -u root -proot microshop_db < database/database_schema.sql     // schema để xây dựng DB
+          mysql -h 127.0.0.1 -u root -proot microshop_db < database/root_data.sql           // dữ liệu gốc cho DB
+          mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_ff.sql             
+          mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_lq.sql         
+          mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_riot.sql           // 4 file mock này là dữ liệu mẫu
+          mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_steam_game.sql         
+          // Có thể vào thư mục database xem 6 file này để hiểu rõ hơn
+      
       
       # 3. Sửa đường dẫn Windows thành Linux cho context.xml
       - name: 3. Chỉnh sửa context.xml cho môi trường Linux
         run: sed -i 's|C:/Users/os/Desktop/microshop_uploads|/tmp/microshop_uploads|g' src/main/webapp/META-INF/context.xml
-        # Lưu ý: Sửa lại đường dẫn tới file context.xml thực tế trong project của bạn
+        // Web này có cái hơi lỏ là nó phải có 1 file 'microshop_uploads' tại desktop thì mới chạy được
+        // Và vì trong Docker file đã tạo sẵn file 'tmp/microshop_uploads'
+        // Chỉ cần thay đổi nội dung đường dẫn trong 'context.xml' về đúng đường dẫn đã tạo 'tmp/microshop_uploads' là được
+        // Xem file content.xml để hiểu rõ hơn
 
       - name: 4. Cài đặt môi trường Java 21        
         uses: actions/setup-java@v4        
