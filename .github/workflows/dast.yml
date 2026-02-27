@@ -30,6 +30,7 @@ jobs:
       # 2. Đổ dữ liệu vào MySQL (Giả sử các file .sql nằm ở thư mục root)
       - name: 2. Import Database Schema và Mock Data
         run: |
+          mysql -h 127.0.0.1 -u root -proot microshop_db < database/database_schema.sql
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/root_data.sql
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_ff.sql
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_lq.sql
