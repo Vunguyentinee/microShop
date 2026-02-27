@@ -30,12 +30,11 @@ jobs:
       # 2. Đổ dữ liệu vào MySQL (Giả sử các file .sql nằm ở thư mục root)
       - name: 2. Import Database Schema và Mock Data
         run: |
-          mysql -h 127.0.0.1 -u root -proot < database/database_schema.sql
-          mysql -h 127.0.0.1 -u root -proot < database/root_data.sql
-          mysql -h 127.0.0.1 -u root -proot < database/mock_ff.sql
-          mysql -h 127.0.0.1 -u root -proot < database/mock_lq.sql
-          mysql -h 127.0.0.1 -u root -proot < database/mock_riot.sql
-          mysql -h 127.0.0.1 -u root -proot < database/mock_steam_game.sql
+          mysql -h 127.0.0.1 -u root -proot microshop_db < database/root_data.sql
+          mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_ff.sql
+          mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_lq.sql
+          mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_riot.sql
+          mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_steam_game.sql
       
       # 3. Sửa đường dẫn Windows thành Linux cho context.xml
       - name: 3. Chỉnh sửa context.xml cho môi trường Linux
