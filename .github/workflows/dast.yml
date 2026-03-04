@@ -2,8 +2,8 @@ name: DAST Baseline Scan
 on:  
   push:    
     branches: [ "main" , "fix-hung"]
-    // Tạm để cơ chế kích hoạt ở nhánh 'fix-hung' để fix nhanh lỗi DAST
-    // Triển khai thực tế cần quy định ít nhất 'on pull' với 'main', 'develop' và on push với tất cả các nhánh khác 
+    # Tạm để cơ chế kích hoạt ở nhánh 'fix-hung' để fix nhanh lỗi DAST
+    # Triển khai thực tế cần quy định ít nhất 'on pull' với 'main', 'develop' và on push với tất cả các nhánh khác 
     
     
 jobs:  
@@ -25,7 +25,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
-          // Đoạn này là khởi tạo MySQL và check sức khỏe Server
+          # Đoạn này là khởi tạo MySQL và check sức khỏe Server
 
     steps:      
       - name: 1. Tải code từ GitHub về máy ảo        
@@ -34,14 +34,14 @@ jobs:
       # 2. Đổ dữ liệu vào MySQL
       - name: 2. Import Database Schema và Mock Data
         run: |
-        // Đối với web này, CSDL cần được nạp 6 file .sql sau
+        # Đối với web này, CSDL cần được nạp 6 file .sql sau
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/database_schema.sql     // schema để xây dựng DB
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/root_data.sql           // dữ liệu gốc cho DB
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_ff.sql             
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_lq.sql         
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_riot.sql           // 4 file mock này là dữ liệu mẫu
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_steam_game.sql         
-          // Có thể vào thư mục database xem 6 file này để hiểu rõ hơn
+          # Có thể vào thư mục database xem 6 file này để hiểu rõ hơn
       
       
       # 3. Sửa đường dẫn Windows thành Linux cho context.xml
