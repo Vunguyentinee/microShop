@@ -1,7 +1,7 @@
 name: DAST Baseline Scan
 on:  
   push:    
-    branches: [ "main" , "fix-hung"]
+    branches: [ "main", "fix-hung" ]
     
 jobs:  
   zap_scan:    
@@ -21,13 +21,14 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
+
     steps:      
       - name: 1. Tải code từ GitHub về máy ảo        
         uses: actions/checkout@v4      
       
       - name: 2. Import Database Schema và Mock Data
         run: |
-        # Đối với web này, CSDL cần được nạp 6 file .sql sau
+          # Đối với web này, CSDL cần được nạp 6 file .sql sau
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/database_schema.sql     
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/root_data.sql         
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_ff.sql             
