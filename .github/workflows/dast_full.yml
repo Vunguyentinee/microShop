@@ -25,7 +25,7 @@ jobs:
           --health-cmd="mysqladmin ping"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=5
 
     steps:
       - name: 1. Checkout source
@@ -41,7 +41,8 @@ jobs:
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_steam_game.sql
 
       - name: 3. Fix context.xml path
-        run: sed -i 's|C:/Users/os/Desktop/microshop_uploads|/tmp/microshop_uploads|g' src/main/webapp/META-INF/context.xml
+        run: |
+          sed -i 's|C:/Users/os/Desktop/microshop_uploads|/tmp/microshop_uploads|g' src/main/webapp/META-INF/context.xml
 
       - name: 4. Setup Java
         uses: actions/setup-java@v4
@@ -72,7 +73,10 @@ jobs:
           cmd_options: '-a -config spider.maxDepth=10 -J zap-report.json'
           fail_action: false
 
-      # Download previous scan (baseline)
+      - name: Debug files
+        run: ls -la
+
+      # Download previous scan
       - name: 9. Download previous report
         uses: actions/download-artifact@v4
         continue-on-error: true
@@ -80,11 +84,15 @@ jobs:
           name: zap-baseline
           path: previous_scan
 
-      # Evaluate Quality Gate
       - name: 10. Evaluate Quality Gate
         run: |
 
           echo "Evaluating vulnerabilities..."
+
+          if [ ! -f zap-report.json ]; then
+            echo "❌ ZAP report not found!"
+            exit 1
+          fi
 
           NEW_HIGH=$(jq '[.site[].alerts[] | select(.riskcode=="3")] | length' zap-report.json)
           NEW_MED=$(jq '[.site[].alerts[] | select(.riskcode=="2")] | length' zap-report.json)
@@ -113,7 +121,6 @@ jobs:
             echo "No new critical vulnerabilities."
           fi
 
-      # Save report for next scan
       - name: 11. Save baseline report
         uses: actions/upload-artifact@v4
         with:
