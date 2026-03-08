@@ -2,7 +2,7 @@ name: DAST Baseline Scan
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main" , "dev_vu", "fix_hung" ]
 
 jobs:
   zap_scan:
