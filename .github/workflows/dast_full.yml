@@ -69,6 +69,7 @@ jobs:
       - name: 8. Run OWASP ZAP Full Scan
         uses: zaproxy/action-full-scan@v0.10.0
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           target: 'http://localhost:8080/microShop'
           cmd_options: '-a -config spider.maxDepth=10 -J zap-report.json'
           fail_action: false
@@ -85,43 +86,46 @@ jobs:
           path: previous_scan
 
       - name: 10. Evaluate Quality Gate
+        shell: bash
         run: |
-
           echo "Evaluating vulnerabilities..."
+          
+          # Kiểm tra xem file có tồn tại không, nếu không thử tìm trong thư mục mặc định của ZAP
+          if [ ! -f zap-report.json ]; then
+            if [ -f report_json.json ]; then cp report_json.json zap-report.json; fi
+          fi
 
           if [ ! -f zap-report.json ]; then
-            echo "❌ ZAP report not found!"
+            echo "❌ ZAP report not found! Check Step 8 output."
             exit 1
           fi
 
-          NEW_HIGH=$(jq '[.site[].alerts[] | select(.riskcode=="3")] | length' zap-report.json)
-          NEW_MED=$(jq '[.site[].alerts[] | select(.riskcode=="2")] | length' zap-report.json)
+          # Lấy số lượng lỗi, mặc định là 0 nếu null
+          NEW_HIGH=$(jq '[.site[].alerts[]? | select(.riskcode=="3")] | length' zap-report.json || echo 0)
+          NEW_MED=$(jq '[.site[].alerts[]? | select(.riskcode=="2")] | length' zap-report.json || echo 0)
 
           OLD_HIGH=0
           OLD_MED=0
 
           if [ -f previous_scan/zap-report.json ]; then
-            OLD_HIGH=$(jq '[.site[].alerts[] | select(.riskcode=="3")] | length' previous_scan/zap-report.json)
-            OLD_MED=$(jq '[.site[].alerts[] | select(.riskcode=="2")] | length' previous_scan/zap-report.json)
+            OLD_HIGH=$(jq '[.site[].alerts[]? | select(.riskcode=="3")] | length' previous_scan/zap-report.json || echo 0)
+            OLD_MED=$(jq '[.site[].alerts[]? | select(.riskcode=="2")] | length' previous_scan/zap-report.json || echo 0)
           fi
 
           echo "----------------------------------"
-          echo "Previous High: $OLD_HIGH"
-          echo "Current High : $NEW_HIGH"
-          echo "Previous Medium: $OLD_MED"
-          echo "Current Medium : $NEW_MED"
+          echo "Previous High: $OLD_HIGH | Current High : $NEW_HIGH"
+          echo "Previous Medium: $OLD_MED | Current Medium : $NEW_MED"
           echo "----------------------------------"
 
           if [ "$NEW_HIGH" -gt "$OLD_HIGH" ] || [ "$NEW_MED" -gt "$OLD_MED" ]; then
-            echo "🚫 QUALITY GATE FAILED"
-            echo "New critical vulnerabilities detected!"
+            echo "🚫 QUALITY GATE FAILED: New vulnerabilities detected!"
             exit 1
           else
-            echo "✅ QUALITY GATE PASSED"
-            echo "No new critical vulnerabilities."
+            echo "✅ QUALITY GATE PASSED: No new vulnerabilities added."
           fi
 
-      - name: 11. Save baseline report
+      - name: 11. Save baseline repor
+        tif: always()
         uses: actions/upload-artifact@v4
         with:
           name: zap-baseline
