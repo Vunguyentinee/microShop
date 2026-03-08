@@ -8,6 +8,8 @@ import com.microshop.listener.OrderCleanupTask;
 import com.microshop.dao.DonHangDAO; 
 import com.microshop.dao.DonHangSlotSteamDAO;
 
+// Hola
+
 // Nghe khi Web bị ngắt và thực hiện thu hồi connection pool an toàn
 @WebListener
 public class DongConnectionPool implements ServletContextListener {
