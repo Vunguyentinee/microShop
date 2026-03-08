@@ -36,4 +36,4 @@ jobs:
         with:
           target: 'http://localhost:8080/'
           issue_title: 'Kết quả kiểm duyệt DAST - Giai đoạn 1'
-          fail_action: false
+          fail_action: true
