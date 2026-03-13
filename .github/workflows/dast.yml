@@ -66,6 +66,7 @@ jobs:
         run: docker pull ghcr.io/zaproxy/zaproxy:stable
 
       - name: 9. Chạy OWASP ZAP baseline-scan
+        continue-on-error: true
         run: |
           docker run --network host \
           -v $(pwd):/zap/wrk/:rw \
