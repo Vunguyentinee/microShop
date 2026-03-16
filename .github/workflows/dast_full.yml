@@ -1,7 +1,7 @@
 name: DAST Full Scan
 
 on:
-  push:
+  push: 
     branches:
       - '**'
   schedule:
@@ -39,9 +39,11 @@ jobs:
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_lq.sql
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_riot.sql
           mysql -h 127.0.0.1 -u root -proot microshop_db < database/mock_steam_game.sql
+          
       - name: 3. Fix context.xml path
         run: |
           sed -i 's|C:/Users/os/Desktop/microshop_uploads|/tmp/microshop_uploads|g' src/main/webapp/META-INF/context.xml
+          
       - name: 4. Setup Java
         uses: actions/setup-java@v4
         with:
@@ -63,6 +65,7 @@ jobs:
             sleep 5
           done
           echo "Application is ready"
+          
       - name: 8. Run OWASP ZAP Full Scan
         uses: zaproxy/action-full-scan@v0.12.0
         with:
@@ -71,17 +74,21 @@ jobs:
           artifact_name: 'zap_full_scan_report'
           cmd_options: '-a -z "-config spider.maxDepth=10"'
           fail_action: false
+          allow_issue_writing: false
 
       - name: Debug files
         run: ls -la
 
-      # Download previous scan
+      # Download previous scan bằng tool chuyên dụng
       - name: Download previous report
-        uses: actions/download-artifact@v4
+        uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
         with:
-          name: 'zap_full_scan_report'  
+          workflow: dast_full.yml
+          branch: ${{ github.ref }}
+          name: zap_final_report            
           path: previous_scan
+          workflow_conclusion: completed
 
       - name: 9. Show Vulnerabilities Summary in Console
         if: always()
@@ -91,56 +98,54 @@ jobs:
           echo "       📊 BẢNG TỔNG HỢP LỖI BẢO MẬT TỪ ZAP 📊       "
           echo "======================================================"
           
-          # Dời logic cứu file lên đây: Nếu có file cũ, đổi tên nó thành zap-report.json
-          if [ ! -f zap-report.json ]; then
-            if [ -f report_json.json ]; then 
-              cp report_json.json zap-report.json
-              echo "✅ Đã khôi phục file báo cáo từ report_json.json"
-            fi
-          fi
-          if [ ! -f zap-report.json ]; then
-            echo "❌ Không tìm thấy file báo cáo nào. Quá trình scan có thể đã lỗi từ trước."
+          if [ ! -f report_json.json ]; then
+            echo "❌ Không tìm thấy file báo cáo report_json.json. Quá trình scan có thể đã lỗi từ trước."
             exit 0
           fi
           echo "Mức độ | Tên lỗ hổng"
           echo "------------------------------------------------------"
+          jq -r '.site[].alerts[]? | "[\(.riskdesc)] \(.name)"' report_json.json | sort | uniq -c | sort -nr
           
-          jq -r '.site[].alerts[]? | "[\(.riskdesc)] \(.name)"' zap-report.json | sort | uniq -c | sort -nr
       - name: 10. Evaluate Quality Gate
         shell: bash
         run: |
           echo "Evaluating vulnerabilities..."
           
-          # Kiểm tra xem file có tồn tại không, nếu không thử tìm trong thư mục mặc định của ZAP
-          if [ ! -f zap-report.json ]; then
-            if [ -f report_json.json ]; then cp report_json.json zap-report.json; fi
-          fi
-          if [ ! -f zap-report.json ]; then
+          if [ ! -f report_json.json ]; then
             echo "❌ ZAP report not found! Check Step 8 output."
             exit 1
           fi
-          # Lấy số lượng lỗi, mặc định là 0 nếu null
-          NEW_HIGH=$(jq '[.site[].alerts[]? | select(.riskcode=="3")] | length' zap-report.json || echo 0)
-          NEW_MED=$(jq '[.site[].alerts[]? | select(.riskcode=="2")] | length' zap-report.json || echo 0)
+          
+          # Lấy số lượng lỗi hiện tại
+          NEW_HIGH=$(jq '[.site[].alerts[]? | select(.riskcode=="3")] | length' report_json.json || echo 0)
+          NEW_MED=$(jq '[.site[].alerts[]? | select(.riskcode=="2")] | length' report_json.json || echo 0)
+          
           OLD_HIGH=0
           OLD_MED=0
-          if [ -f previous_scan/zap-report.json ]; then
-            OLD_HIGH=$(jq '[.site[].alerts[]? | select(.riskcode=="3")] | length' previous_scan/zap-report.json || echo 0)
-            OLD_MED=$(jq '[.site[].alerts[]? | select(.riskcode=="2")] | length' previous_scan/zap-report.json || echo 0)
+          
+          # Lấy số lượng lỗi cũ (Nếu tìm thấy báo cáo của lần chạy trước)
+          if [ -f previous_scan/report_json.json ]; then
+            OLD_HIGH=$(jq '[.site[].alerts[]? | select(.riskcode=="3")] | length' previous_scan/report_json.json || echo 0)
+            OLD_MED=$(jq '[.site[].alerts[]? | select(.riskcode=="2")] | length' previous_scan/report_json.json || echo 0)
           fi
+          
           echo "----------------------------------"
           echo "Previous High: $OLD_HIGH | Current High : $NEW_HIGH"
           echo "Previous Medium: $OLD_MED | Current Medium : $NEW_MED"
           echo "----------------------------------"
+          
           if [ "$NEW_HIGH" -gt "$OLD_HIGH" ] || [ "$NEW_MED" -gt "$OLD_MED" ]; then
             echo "🚫 QUALITY GATE FAILED: New vulnerabilities detected!"
             exit 1
           else
             echo "✅ QUALITY GATE PASSED: No new vulnerabilities added."
           fi
-      - name: 11. Save baseline report
+          
+      - name: 11. Save Full Scan report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zap-baseline
-          path: zap-report.json
+          name: zap_final_report
+          path: |
+            report_json.json
+            report_html.html
